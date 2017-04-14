@@ -4,6 +4,7 @@ package NS_Project;
  * Created by zhouxuexuan on 13/4/17.
  */
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -42,9 +43,11 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class FileServerAES implements Runnable{
     private ServerSocket serverSockets;
+    private int portnum;
 
     private FileServerAES(int port) throws InterruptedException {
         try {
+            portnum = port;
             serverSockets = new ServerSocket(port);
         } catch (IOException e) {
             e.printStackTrace();
@@ -52,13 +55,15 @@ public class FileServerAES implements Runnable{
     }
 
     public void run() {
+        while(true) {
             try {
+                System.out.println("Port "+portnum+" is waiting for connection");
                 Socket clientSock = serverSockets.accept();
                 System.out.println("A Client is connected");
                 final long startTime = System.currentTimeMillis();
                 saveFile(clientSock);
                 final long endTime = System.currentTimeMillis();
-                System.out.println("Total execution time in ms: " + (endTime - startTime) );
+                System.out.println("Total execution time in ms: " + (endTime - startTime));
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (CertificateException e) {
@@ -78,6 +83,7 @@ public class FileServerAES implements Runnable{
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
     }
 
     private void saveFile(Socket clientSock) throws Exception {
@@ -87,7 +93,6 @@ public class FileServerAES implements Runnable{
         System.out.println("Sending CA: " + "(" + cabytes.length + " bytes)");
         os.write(cabytes,0,cabytes.length);
         os.flush();
-        System.out.println(cabytes);
         System.out.println("CA sent.");
         BufferedReader in = new BufferedReader(new InputStreamReader(clientSock.getInputStream()));
         PrintWriter out = new PrintWriter(clientSock.getOutputStream(), true);
@@ -107,15 +112,18 @@ public class FileServerAES implements Runnable{
         in.close();
         out.close();
         clientSock.close();
+        System.out.println("Client sk closed");
         ConvertFile();
     }
     public void ConvertFile() throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
+        int count=0;
+        String path = "/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/";
+        String workingpath = parsefile(path,count);
         String key = "Bar12345Bar12345";
         String initVector = "RandomInitVector";
-        PrintWriter printWriter = new PrintWriter("/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/output.txt");
+        PrintWriter printWriter = new PrintWriter(workingpath);
         BufferedReader br = new BufferedReader(new FileReader("/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/AEScipher.txt"));
         String cipherdata = br.readLine();
-        System.out.println(cipherdata);
         String outputstring = decrypt(key,initVector,cipherdata);
         printWriter.write(outputstring);
         printWriter.close();
@@ -147,5 +155,15 @@ public class FileServerAES implements Runnable{
         }
 
         return null;
+    }
+    private static String parsefile(String path, int count) {
+        String fdn = "Out"+count+".txt";
+        File fl = new File(path+fdn);
+        while (fl.exists()){
+            count++;
+            fdn = "Out"+count+".txt";
+            fl = new File(path+fdn);
+        }
+        return path+fdn;
     }
 }

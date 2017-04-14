@@ -48,9 +48,11 @@ import sun.security.provider.SHA;
 
 public class FileServerRSA implements Runnable{
     private ServerSocket serverSockets;
+    private int portnum;
 
     private FileServerRSA(int port) throws InterruptedException {
         try {
+            portnum = port;
             serverSockets = new ServerSocket(port);
         } catch (IOException e) {
             e.printStackTrace();
@@ -58,13 +60,15 @@ public class FileServerRSA implements Runnable{
     }
 
     public void run() {
+        while (true) {
             try {
+                System.out.println("Port "+portnum+" is waiting for connection");
                 Socket clientSock = serverSockets.accept();
                 System.out.println("A Client is connected");
                 final long startTime = System.currentTimeMillis();
                 saveFile(clientSock);
                 final long endTime = System.currentTimeMillis();
-                System.out.println("Total execution time in ms: " + (endTime - startTime) );
+                System.out.println("Total execution time in ms: " + (endTime - startTime));
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (CertificateException e) {
@@ -84,10 +88,10 @@ public class FileServerRSA implements Runnable{
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
     }
 
     private void saveFile(Socket clientSock) throws Exception {
-        int nRead;
         Path cafile = Paths.get("/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/CA.crt");
         byte [] cabytes  = Files.readAllBytes(cafile);
         OutputStream os = clientSock.getOutputStream();
@@ -116,13 +120,15 @@ public class FileServerRSA implements Runnable{
         clientSock.close();
         ConvertFile();
     }
-    public void ConvertFile() throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
+    private void ConvertFile() throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
+        int count=0;
         String path = "/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/";
+        String workingpath = parsefile(path,count);
         KeyPair ShareKeyPair=LoadKeyPair(path,"RSA");
         dumpKeyPair(ShareKeyPair);
         PrivateKey privateKey=ShareKeyPair.getPrivate();
         PublicKey publicKey=ShareKeyPair.getPublic();
-        PrintWriter printWriter = new PrintWriter("/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/output.txt");
+        PrintWriter printWriter = new PrintWriter(workingpath);
         try (BufferedReader br = new BufferedReader(new FileReader("/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/RSAcipher.txt"))) {
             String line;
             while ((line = br.readLine()) != null) {
@@ -197,5 +203,15 @@ public class FileServerRSA implements Runnable{
             result += Integer.toString((b[i] & 0xff) + 0x100, 16).substring(1);
         }
         return result;
+    }
+    private static String parsefile(String path, int count) {
+        String fdn = "Out"+count+".txt";
+        File fl = new File(path+fdn);
+        while (fl.exists()){
+            count++;
+            fdn = "Out"+count+".txt";
+            fl = new File(path+fdn);
+        }
+        return path+fdn;
     }
 }
