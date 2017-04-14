@@ -75,6 +75,7 @@ public class FileClientAES {
             in.close();
             out.close();
             echoSocket.close();
+            System.out.println("Client Socket Closed");
         }else {
             System.out.println("Reject!");
         }

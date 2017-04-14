@@ -100,19 +100,19 @@ public class FileServerAES implements Runnable{
         String inputLine;
         do {
             inputLine = in.readLine();
-            out.println("pass my fiend");
+            out.println("pass my friend");
             out.flush();
             if (!inputLine.equals("&&&NOMORE&&&")) {
                 printWriter.write(inputLine + "\r\n");
             }
         } while (!inputLine.equals("&&&NOMORE&&&"));
-        out.println("pass my fiend");
+        out.println("pass my friend");
         out.flush();
         printWriter.close();
         in.close();
         out.close();
         clientSock.close();
-        System.out.println("Client sk closed");
+        System.out.println("Cipher Transfer Finished, Starting Decryption");
         ConvertFile();
     }
     public void ConvertFile() throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
@@ -127,7 +127,7 @@ public class FileServerAES implements Runnable{
         String outputstring = decrypt(key,initVector,cipherdata);
         printWriter.write(outputstring);
         printWriter.close();
-        System.out.println("Decrypt Finished");
+        System.out.println("Decryption Finished");
     }
 
     public static void main(String[] args) throws Exception {

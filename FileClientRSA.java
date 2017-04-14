@@ -78,6 +78,7 @@ public class FileClientRSA {
             inputStream.close();
             out.close();
             echoSocket.close();
+            System.out.println("Client Socket Closed");
         }else {
             System.out.println("Reject!");
         }
@@ -167,5 +168,4 @@ public class FileClientRSA {
         }
         return result;
     }
-
 }

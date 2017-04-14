@@ -64,7 +64,7 @@ public class FileServerRSA implements Runnable{
             try {
                 System.out.println("Port "+portnum+" is waiting for connection");
                 Socket clientSock = serverSockets.accept();
-                System.out.println("A Client is connected");
+                System.out.println("A Client is connected to "+portnum);
                 final long startTime = System.currentTimeMillis();
                 saveFile(clientSock);
                 final long endTime = System.currentTimeMillis();
@@ -118,6 +118,7 @@ public class FileServerRSA implements Runnable{
         in.close();
         out.close();
         clientSock.close();
+        System.out.println("Cipher Transfer Finished, Starting Decryption");
         ConvertFile();
     }
     private void ConvertFile() throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
@@ -138,7 +139,7 @@ public class FileServerRSA implements Runnable{
             e.printStackTrace();
         }
         printWriter.close();
-        System.out.println("Decrypt Finished");
+        System.out.println("Decryption Finished");
     }
 
     public static void main(String[] args) throws Exception {
