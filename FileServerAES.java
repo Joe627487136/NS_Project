@@ -3,16 +3,10 @@ package NS_Project;
 /**
  * Created by zhouxuexuan on 13/4/17.
  */
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -45,8 +39,6 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import sun.security.provider.SHA;
-
 
 public class FileServerAES implements Runnable{
     private ServerSocket serverSockets;
@@ -60,11 +52,13 @@ public class FileServerAES implements Runnable{
     }
 
     public void run() {
-        while (true) {
             try {
                 Socket clientSock = serverSockets.accept();
-                System.out.println("One Client in");
+                System.out.println("A Client is connected");
+                final long startTime = System.currentTimeMillis();
                 saveFile(clientSock);
+                final long endTime = System.currentTimeMillis();
+                System.out.println("Total execution time in ms: " + (endTime - startTime) );
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (CertificateException e) {
@@ -84,11 +78,9 @@ public class FileServerAES implements Runnable{
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
     }
 
     private void saveFile(Socket clientSock) throws Exception {
-        int nRead;
         Path cafile = Paths.get("/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/CA.crt");
         byte [] cabytes  = Files.readAllBytes(cafile);
         OutputStream os = clientSock.getOutputStream();
@@ -120,17 +112,12 @@ public class FileServerAES implements Runnable{
     public void ConvertFile() throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
         String key = "Bar12345Bar12345";
         String initVector = "RandomInitVector";
-        String path = "/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/";
         PrintWriter printWriter = new PrintWriter("/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/output.txt");
-        try (BufferedReader br = new BufferedReader(new FileReader("/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/AEScipher.txt"))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                System.out.println("Printing one line");
-                printWriter.write(decrypt(key,initVector,line) + "\r\n");
-            }
-        }catch (Exception e){
-            e.printStackTrace();
-        }
+        BufferedReader br = new BufferedReader(new FileReader("/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/AEScipher.txt"));
+        String cipherdata = br.readLine();
+        System.out.println(cipherdata);
+        String outputstring = decrypt(key,initVector,cipherdata);
+        printWriter.write(outputstring);
         printWriter.close();
         System.out.println("Decrypt Finished");
     }

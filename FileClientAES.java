@@ -61,40 +61,16 @@ public class FileClientAES {
         if(Handshake) {
             String key = "Bar12345Bar12345";
             String initVector = "RandomInitVector";
+            String filepath = "/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/largeFile.txt";
             PrintWriter out = new PrintWriter(echoSocket.getOutputStream(), true);
             BufferedReader in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
-            BufferedReader is = new BufferedReader(new FileReader("/Users/zhouxuexuan/desktop/input.txt"));
+            BufferedReader is = new BufferedReader(new FileReader(filepath));
+            String cipherdata = new String(Files.readAllBytes(Paths.get(filepath)));
             String inputraw = is.readLine();
-            String inputLine = encrypt(key,initVector,inputraw);
-            System.out.println(inputLine);
-            while (inputraw != null) {
-                while (true) {
-                    out.println(inputLine);
-                    out.flush();
-                    try {
-                        in.readLine();
-                        break;
-                    }
-                    catch (java.net.SocketTimeoutException e) {
-                    }
-                }
-                inputraw = is.readLine();
-                try{inputLine = encrypt(key,initVector,inputraw);
-                }catch (NullPointerException e){
-                    break;
-                }
-                System.out.println(inputLine);
-            }
-            while (true) {
-                out.println("&&&NOMORE&&&");
-                try {
-                    inputLine = in.readLine();
-                    break;
-                }
-                catch (java.net.SocketTimeoutException e) {
-                }
-            }
-
+            String ciphertxt = encrypt(key,initVector,cipherdata);
+            out.println(ciphertxt);
+            out.flush();
+            out.println("&&&NOMORE&&&");
             is.close();
             in.close();
             out.close();
@@ -130,6 +106,7 @@ public class FileClientAES {
         }
         return true;
     }
+
 
     public static String encrypt(String key, String initVector, String value) {
         try {

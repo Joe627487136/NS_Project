@@ -47,8 +47,6 @@ public class FileClientRSA {
         String hostName = "127.0.0.1";
         int portNumber = 4999;
         boolean Handshake = false;
-        byte[] filebytes;
-        byte[][]byteschunksarray;
         String path = "/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/";
         Socket echoSocket = new Socket(hostName, portNumber);
         InputStream inputStream = echoSocket.getInputStream();
@@ -57,6 +55,7 @@ public class FileClientRSA {
             System.out.println("Handshake established\n\n");
         }
         if(Handshake) {
+            String filepath = "/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/largeFile.txt";
             Cipher encryptCipher = Cipher.getInstance("RSA");
             KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
             keyGen.initialize(1024);
@@ -67,41 +66,16 @@ public class FileClientRSA {
             dumpKeyPair(keyPair);
             encryptCipher.init(Cipher.ENCRYPT_MODE, publickey);
             PrintWriter out = new PrintWriter(echoSocket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
-            BufferedReader is = new BufferedReader(new FileReader("/Users/zhouxuexuan/desktop/input.txt"));
-            String inputraw = is.readLine();
-            String inputLine = encrypt(inputraw,privatekey);
-            System.out.println(inputLine);
-            while (inputraw != null) {
-                while (true) {
-                    out.println(inputLine);
-                    out.flush();
-                    try {
-                        in.readLine();
-                        break;
-                    }
-                    catch (java.net.SocketTimeoutException e) {
-                    }
-                }
-                inputraw = is.readLine();
-                try{inputLine = encrypt(inputraw,privatekey);
-                }catch (NullPointerException e){
-                    break;
-                }
-                System.out.println(inputLine);
+            byte[] cipherbytes = Files.readAllBytes(Paths.get(filepath));
+            byte[][] cipherchunks = splitArray(cipherbytes,117);
+            for(byte[] i:cipherchunks){
+                String s = new String(i);
+                String flushingstring = encrypt(s,privatekey);
+                out.println(flushingstring);
+                out.flush();
             }
-            while (true) {
-                out.println("&&&NOMORE&&&");
-                try {
-                    inputLine = in.readLine();
-                    break;
-                }
-                catch (java.net.SocketTimeoutException e) {
-                }
-            }
-
-            is.close();
-            in.close();
+            out.println("&&&NOMORE&&&");
+            inputStream.close();
             out.close();
             echoSocket.close();
         }else {

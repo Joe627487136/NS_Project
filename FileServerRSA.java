@@ -58,11 +58,13 @@ public class FileServerRSA implements Runnable{
     }
 
     public void run() {
-        while (true) {
             try {
                 Socket clientSock = serverSockets.accept();
-                System.out.println("One Client in");
+                System.out.println("A Client is connected");
+                final long startTime = System.currentTimeMillis();
                 saveFile(clientSock);
+                final long endTime = System.currentTimeMillis();
+                System.out.println("Total execution time in ms: " + (endTime - startTime) );
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (CertificateException e) {
@@ -82,7 +84,6 @@ public class FileServerRSA implements Runnable{
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
     }
 
     private void saveFile(Socket clientSock) throws Exception {
