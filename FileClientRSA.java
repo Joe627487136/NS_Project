@@ -149,9 +149,6 @@ public class FileClientRSA {
         encryptCipher.init(Cipher.ENCRYPT_MODE, privateKey);
 
         byte[] cipherText = encryptCipher.doFinal(plainText.getBytes());
-        System.out.println("Signed bytes[] length: "+cipherText.length);
-        System.out.println(cipherText);
-
         return Base64.getEncoder().encodeToString(cipherText);
     }
 
