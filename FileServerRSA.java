@@ -132,7 +132,6 @@ public class FileServerRSA implements Runnable{
         try (BufferedReader br = new BufferedReader(new FileReader("/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/RSAcipher.txt"))) {
             String line;
             while ((line = br.readLine()) != null) {
-                System.out.println("Printing one line");
                 printWriter.write(decrypt(line,publicKey) + "\r\n");
             }
         }catch (Exception e){
