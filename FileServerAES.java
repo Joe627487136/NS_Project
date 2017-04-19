@@ -44,6 +44,7 @@ import javax.crypto.spec.SecretKeySpec;
 public class FileServerAES implements Runnable{
     private ServerSocket serverSockets;
     private int portnum;
+    private static String rootpath = "/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/";
 
     private FileServerAES(int port) throws InterruptedException {
         try {
@@ -87,7 +88,7 @@ public class FileServerAES implements Runnable{
     }
 
     private void saveFile(Socket clientSock) throws Exception {
-        Path cafile = Paths.get("/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/CA.crt");
+        Path cafile = Paths.get(rootpath+"CA.crt");
         byte [] cabytes  = Files.readAllBytes(cafile);
         OutputStream os = clientSock.getOutputStream();
         System.out.println("Sending CA: " + "(" + cabytes.length + " bytes)");
@@ -96,7 +97,7 @@ public class FileServerAES implements Runnable{
         System.out.println("CA sent.");
         BufferedReader in = new BufferedReader(new InputStreamReader(clientSock.getInputStream()));
         PrintWriter out = new PrintWriter(clientSock.getOutputStream(), true);
-        PrintWriter printWriter = new PrintWriter("/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/AEScipher.txt");
+        PrintWriter printWriter = new PrintWriter(rootpath+"AEScipher.txt");
         String inputLine;
         do {
             inputLine = in.readLine();
@@ -117,12 +118,11 @@ public class FileServerAES implements Runnable{
     }
     public void ConvertFile() throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
         int count=0;
-        String path = "/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/";
-        String workingpath = parsefile(path,count);
+        String workingpath = parsefile(rootpath,count);
         String key = "Bar12345Bar12345";
         String initVector = "RandomInitVector";
         PrintWriter printWriter = new PrintWriter(workingpath);
-        BufferedReader br = new BufferedReader(new FileReader("/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/AEScipher.txt"));
+        BufferedReader br = new BufferedReader(new FileReader(rootpath+"AEScipher.txt"));
         String cipherdata = br.readLine();
         String outputstring = decrypt(key,initVector,cipherdata);
         printWriter.write(outputstring);

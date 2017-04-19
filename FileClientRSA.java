@@ -43,11 +43,12 @@ import static java.util.Base64.getEncoder;
 
 
 public class FileClientRSA {
+    private static String rootpath = "/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/";
     public static void main(String[] args) throws Exception {
         String hostName = "127.0.0.1";
         int portNumber = 4999;
         boolean Handshake = false;
-        String path = "/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/";
+        String path = rootpath;
         Socket echoSocket = new Socket(hostName, portNumber);
         InputStream inputStream = echoSocket.getInputStream();
         if (EstablishHandshake(inputStream)) {
@@ -55,7 +56,7 @@ public class FileClientRSA {
             System.out.println("Handshake established\n\n");
         }
         if(Handshake) {
-            String filepath = "/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/largeFile.txt";
+            String filepath = rootpath+"largeFile.txt";
             Cipher encryptCipher = Cipher.getInstance("RSA");
             KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
             keyGen.initialize(1024);

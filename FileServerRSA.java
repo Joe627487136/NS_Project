@@ -49,6 +49,7 @@ import sun.security.provider.SHA;
 public class FileServerRSA implements Runnable{
     private ServerSocket serverSockets;
     private int portnum;
+    private static String rootpath = "/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/";
 
     private FileServerRSA(int port) throws InterruptedException {
         try {
@@ -92,7 +93,7 @@ public class FileServerRSA implements Runnable{
     }
 
     private void saveFile(Socket clientSock) throws Exception {
-        Path cafile = Paths.get("/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/CA.crt");
+        Path cafile = Paths.get(rootpath+"CA.crt");
         byte [] cabytes  = Files.readAllBytes(cafile);
         OutputStream os = clientSock.getOutputStream();
         System.out.println("Sending CA: " + "(" + cabytes.length + " bytes)");
@@ -102,7 +103,7 @@ public class FileServerRSA implements Runnable{
         System.out.println("CA sent.");
         BufferedReader in = new BufferedReader(new InputStreamReader(clientSock.getInputStream()));
         PrintWriter out = new PrintWriter(clientSock.getOutputStream(), true);
-        PrintWriter printWriter = new PrintWriter("/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/RSAcipher.txt");
+        PrintWriter printWriter = new PrintWriter(rootpath+"RSAcipher.txt");
         String inputLine;
         do {
             inputLine = in.readLine();
@@ -123,14 +124,14 @@ public class FileServerRSA implements Runnable{
     }
     private void ConvertFile() throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
         int count=0;
-        String path = "/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/";
+        String path = rootpath;
         String workingpath = parsefile(path,count);
         KeyPair ShareKeyPair=LoadKeyPair(path,"RSA");
         dumpKeyPair(ShareKeyPair);
         PrivateKey privateKey=ShareKeyPair.getPrivate();
         PublicKey publicKey=ShareKeyPair.getPublic();
         PrintWriter printWriter = new PrintWriter(workingpath);
-        try (BufferedReader br = new BufferedReader(new FileReader("/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/RSAcipher.txt"))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(rootpath+"RSAcipher.txt"))) {
             String line;
             while ((line = br.readLine()) != null) {
                 printWriter.write(decrypt(line,publicKey) + "\r\n");

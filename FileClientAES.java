@@ -49,9 +49,6 @@ public class FileClientAES {
         String hostName = "127.0.0.1";
         int portNumber = 4999;
         boolean Handshake = false;
-        byte[] filebytes;
-        byte[][]byteschunksarray;
-        String path = "/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/";
         Socket echoSocket = new Socket(hostName, portNumber);
         InputStream inputStream = echoSocket.getInputStream();
         if (EstablishHandshake(inputStream)) {
