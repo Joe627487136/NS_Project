@@ -1,7 +1,7 @@
 package NS_Project;
 
 /**
- * Created by zhouxuexuan on 13/4/17.
+ * Created by skychaser on 04/14/2017.
  */
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -134,7 +134,7 @@ public class FileServerRSA implements Runnable{
         try (BufferedReader br = new BufferedReader(new FileReader(rootpath+"RSAcipher.txt"))) {
             String line;
             while ((line = br.readLine()) != null) {
-                printWriter.write(decrypt(line,publicKey) + "\r\n");
+                printWriter.write(decrypt(line,privateKey) + "\r\n");
             }
         }catch (Exception e){
             e.printStackTrace();
@@ -181,12 +181,12 @@ public class FileServerRSA implements Runnable{
 
         return new KeyPair(publicKey, privateKey);
     }
-    public static String decrypt(String cipherText, PublicKey publicKey) throws Exception {
+    public static String decrypt(String cipherText, PrivateKey privateKey) throws Exception {
         byte[] bytes = Base64.getDecoder().decode(cipherText);
         //System.out.println("Signed bytes[] length: "+bytes.length);
 
         Cipher decriptCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-        decriptCipher.init(Cipher.DECRYPT_MODE, publicKey);
+        decriptCipher.init(Cipher.DECRYPT_MODE, privateKey);
 
         return new String(decriptCipher.doFinal(bytes));
     }

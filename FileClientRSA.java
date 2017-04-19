@@ -1,7 +1,7 @@
 package NS_Project;
 
 /**
- * Created by zhouxuexuan on 13/4/17.
+ * Created by skychaser on 04/14/2017.
  */
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.InvalidKeyException;
+import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -32,6 +33,7 @@ import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
@@ -56,22 +58,19 @@ public class FileClientRSA {
             System.out.println("Handshake established\n\n");
         }
         if(Handshake) {
-            String filepath = rootpath+"largeFile.txt";
+            String filepath = rootpath+"smallFile.txt";
             Cipher encryptCipher = Cipher.getInstance("RSA");
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-            keyGen.initialize(1024);
-            KeyPair keyPair = keyGen.generateKeyPair();
-            PublicKey publickey = keyPair.getPublic();
-            PrivateKey privatekey = keyPair.getPrivate();
-            SaveKeyPair(path,keyPair);
-            dumpKeyPair(keyPair);
-            encryptCipher.init(Cipher.ENCRYPT_MODE, publickey);
+            KeyPair ShareKeyPair=LoadKeyPair(path,"RSA");
+            dumpKeyPair(ShareKeyPair);
+            PrivateKey privateKey=ShareKeyPair.getPrivate();
+            PublicKey publicKey=ShareKeyPair.getPublic();
+            encryptCipher.init(Cipher.ENCRYPT_MODE, publicKey);
             PrintWriter out = new PrintWriter(echoSocket.getOutputStream(), true);
             byte[] cipherbytes = Files.readAllBytes(Paths.get(filepath));
             byte[][] cipherchunks = splitArray(cipherbytes,117);
             for(byte[] i:cipherchunks){
                 String s = new String(i);
-                String flushingstring = encrypt(s,privatekey);
+                String flushingstring = encrypt(s,publicKey);
                 out.println(flushingstring);
                 out.flush();
             }
@@ -146,9 +145,9 @@ public class FileClientRSA {
         return arrays;
     }
 
-    public static String encrypt(String plainText, PrivateKey privateKey) throws Exception {
+    public static String encrypt(String plainText, PublicKey publicKey) throws Exception {
         Cipher encryptCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-        encryptCipher.init(Cipher.ENCRYPT_MODE, privateKey);
+        encryptCipher.init(Cipher.ENCRYPT_MODE, publicKey);
 
         byte[] cipherText = encryptCipher.doFinal(plainText.getBytes());
         return Base64.getEncoder().encodeToString(cipherText);
@@ -168,5 +167,35 @@ public class FileClientRSA {
             result += Integer.toString((b[i] & 0xff) + 0x100, 16).substring(1);
         }
         return result;
+    }
+
+    public static KeyPair LoadKeyPair(String path, String algorithm)
+            throws IOException, NoSuchAlgorithmException,
+            InvalidKeySpecException {
+        // Read Public Key.
+        File filePublicKey = new File(path + "/public.key");
+        FileInputStream fis = new FileInputStream(path + "/public.key");
+        byte[] encodedPublicKey = new byte[(int) filePublicKey.length()];
+        fis.read(encodedPublicKey);
+        fis.close();
+
+        // Read Private Key.
+        File filePrivateKey = new File(path + "/private.key");
+        fis = new FileInputStream(path + "/private.key");
+        byte[] encodedPrivateKey = new byte[(int) filePrivateKey.length()];
+        fis.read(encodedPrivateKey);
+        fis.close();
+
+        // Generate KeyPair.
+        KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
+        X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(
+                encodedPublicKey);
+        PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
+
+        PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(
+                encodedPrivateKey);
+        PrivateKey privateKey = keyFactory.generatePrivate(privateKeySpec);
+
+        return new KeyPair(publicKey, privateKey);
     }
 }
