@@ -3,38 +3,21 @@ package NS_Project;
 /**
  * Created by skychaser on 04/14/2017.
  */
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
-import java.awt.image.WritableRaster;
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.lang.reflect.Array;
 import java.net.Socket;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.SignatureException;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateFactory;
-import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -43,12 +26,9 @@ import java.util.Arrays;
 import java.util.Base64;
 
 import javax.crypto.Cipher;
-import javax.imageio.ImageIO;
-
-import static java.util.Base64.getEncoder;
 
 
-public class FileClientRSA {
+public class ImgClientRSA {
     private static String rootpath = "/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/";
     public static void main(String[] args) throws Exception {
         String hostName = "127.0.0.1";
@@ -72,7 +52,7 @@ public class FileClientRSA {
             encryptCipher.init(Cipher.ENCRYPT_MODE, publicKey);
             PrintWriter out = new PrintWriter(echoSocket.getOutputStream(), true);
             //Selection
-            byte[] cipherbytes = Files.readAllBytes(Paths.get(filepath1));
+            byte[] cipherbytes = Files.readAllBytes(Paths.get(filepath2));
             byte[][] cipherchunks = splitArray(cipherbytes,117);
             for(byte[] i:cipherchunks){
                 String flushingstring = encrypt(i,publicKey);

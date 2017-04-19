@@ -3,48 +3,22 @@ package NS_Project;
 /**
  * Created by skychaser on 04/14/2017.
  */
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.lang.reflect.Array;
 import java.net.Socket;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.InvalidKeyException;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.SignatureException;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateFactory;
-import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.X509EncodedKeySpec;
-import java.util.Arrays;
 import java.util.Base64;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import static java.util.Base64.getEncoder;
 
-
-public class FileClientAES {
+public class ImgClientAES {
     public static void main(String[] args) throws Exception {
         String hostName = "127.0.0.1";
         int portNumber = 4999;
@@ -59,12 +33,12 @@ public class FileClientAES {
             String key = "Bar12345Bar12345";
             String initVector = "RandomInitVector";
             //
-            String filepath = "/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/largeFile.txt";
-            //String filepath = "/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/globe.bmp";
+            //String filepath = "/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/largeFile.txt";
+            String filepath = "/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/globe.bmp";
             //
             PrintWriter out = new PrintWriter(echoSocket.getOutputStream(), true);
             byte[] cipherbytes = Files.readAllBytes(Paths.get(filepath));
-            System.out.println("Byte length: "+cipherbytes.length);
+            System.out.println("Img byte length: "+cipherbytes.length);
             String ciphertxt = encrypt(key,initVector,cipherbytes);
             out.println(ciphertxt);
             out.flush();
@@ -113,7 +87,6 @@ public class FileClientAES {
 
         return null;
     }
-
 
 }
 

@@ -3,12 +3,12 @@ package NS_Project;
 /**
  * Created by skychaser on 04/14/2017.
  */
+
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -19,25 +19,16 @@ import java.net.SocketException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.rmi.server.ExportException;
 import java.security.InvalidKeyException;
-import java.security.KeyFactory;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
@@ -45,12 +36,12 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.imageio.ImageIO;
 
 
-public class FileServerAES implements Runnable{
+public class ImgServerAES implements Runnable{
     private ServerSocket serverSockets;
     private int portnum;
     private static String rootpath = "/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/";
 
-    private FileServerAES(int port) throws InterruptedException {
+    private ImgServerAES(int port) throws InterruptedException {
         try {
             portnum = port;
             serverSockets = new ServerSocket(port);
@@ -99,11 +90,9 @@ public class FileServerAES implements Runnable{
         os.flush();
         System.out.println("CA sent.");
         int count=0;
-        String DecryptedTxt;
-        String workingpath = parsefile(rootpath,count);
+        byte[] Decryptedbytes;
         String key = "Bar12345Bar12345";
         String initVector = "RandomInitVector";
-        PrintWriter printWriter = new PrintWriter(workingpath);
         BufferedReader in = new BufferedReader(new InputStreamReader(clientSock.getInputStream()));
         PrintWriter out = new PrintWriter(clientSock.getOutputStream(), true);
         String inputLine;
@@ -111,8 +100,9 @@ public class FileServerAES implements Runnable{
             inputLine = in.readLine();
             if(!inputLine.equals("&&&NOMORE&&&")){
                 System.out.println("Input String Length: "+inputLine.length());
-                DecryptedTxt = decrypt(key,initVector,inputLine);
-                printWriter.write(DecryptedTxt);
+                Decryptedbytes = decrypttoimg(key,initVector,inputLine);
+                BufferedImage img = ImageIO.read(new ByteArrayInputStream(Decryptedbytes));
+                ImageIO.write(img, "bmp", new File(rootpath+"new-darksouls2.bmp"));
             }else {
                 System.out.println("Decrypt liao");
             }
@@ -125,21 +115,31 @@ public class FileServerAES implements Runnable{
         out.flush();
         in.close();
         out.close();
-        printWriter.close();
         clientSock.close();
-        System.out.println("Transfer Finished");
+        System.out.println("Image Transfer Finished");
     }
 
     public static void main(String[] args) throws Exception {
         int max_pool_size = 5;
         ExecutorService exec = Executors.newFixedThreadPool(max_pool_size);
         for(int i=4999; i<=5003;i++){
-            Runnable worker = new FileServerAES(i);
+            Runnable worker = new ImgServerAES(i);
             exec.execute(worker);
         }
     }
 
-    public static String decrypt(String key, String initVector, String encrypted) {
+    private static String parsefileimg(String path, int count) {
+        String fdn = "Out"+count+".bmp";
+        File fl = new File(path+fdn);
+        while (fl.exists()){
+            count++;
+            fdn = "Out"+count+".bmp";
+            fl = new File(path+fdn);
+        }
+        return path+fdn;
+    }
+
+    public static byte[] decrypttoimg(String key, String initVector, String encrypted) {
         try {
             IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
             SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
@@ -148,23 +148,12 @@ public class FileServerAES implements Runnable{
             cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
 
             byte[] original = cipher.doFinal(Base64.getDecoder().decode(encrypted));
-            System.out.println(original.length);
 
-            return new String(original);
+            return original;
         } catch (Exception ex) {
             ex.printStackTrace();
         }
 
         return null;
-    }
-    private static String parsefile(String path, int count) {
-        String fdn = "Out"+count+".txt";
-        File fl = new File(path+fdn);
-        while (fl.exists()){
-            count++;
-            fdn = "Out"+count+".txt";
-            fl = new File(path+fdn);
-        }
-        return path+fdn;
     }
 }

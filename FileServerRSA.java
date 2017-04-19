@@ -7,6 +7,7 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,6 +21,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -46,6 +48,7 @@ import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 import javax.imageio.ImageIO;
 
+import sun.net.ConnectionResetException;
 import sun.security.provider.SHA;
 
 
@@ -90,100 +93,54 @@ public class FileServerRSA implements Runnable{
             } catch (InvalidKeySpecException e) {
                 e.printStackTrace();
             } catch (Exception e) {
-                //
+                e.printStackTrace();
             }
         }
     }
 
     private void saveFile(Socket clientSock) throws Exception {
-        Path cafile = Paths.get(rootpath+"CAfake.crt");
-        byte [] cabytes  = Files.readAllBytes(cafile);
+        Path cafile = Paths.get(rootpath + "CA.crt");
+        byte[] cabytes = Files.readAllBytes(cafile);
         OutputStream os = clientSock.getOutputStream();
         System.out.println("Sending CA: " + "(" + cabytes.length + " bytes)");
-        os.write(cabytes,0,cabytes.length);
+        os.write(cabytes, 0, cabytes.length);
         os.flush();
         System.out.println(cabytes);
         System.out.println("CA sent.");
         BufferedReader in = new BufferedReader(new InputStreamReader(clientSock.getInputStream()));
         PrintWriter out = new PrintWriter(clientSock.getOutputStream(), true);
-        PrintWriter printWriter = new PrintWriter(rootpath+"RSAcipher.txt");
         String inputLine;
-        do {
-            inputLine = in.readLine();
-            out.println("pass my fiend");
-            out.flush();
-            if (!inputLine.equals("&&&NOMORE&&&")) {
-                printWriter.write(inputLine + "\r\n");
-            }
-        } while (!inputLine.equals("&&&NOMORE&&&"));
-        out.println("pass my fiend");
-        out.flush();
+        byte[] totbyte = new byte[0];
+        int count = 0;
+        String workingpath = parsefile(rootpath,count);
+        PrintWriter printWriter = new PrintWriter(workingpath);
+        String path = rootpath;
+        KeyPair ShareKeyPair = LoadKeyPair(path, "RSA");
+        dumpKeyPair(ShareKeyPair);
+        PrivateKey privateKey = ShareKeyPair.getPrivate();
+        PublicKey publicKey = ShareKeyPair.getPublic();
+        try {
+            do {
+                inputLine = in.readLine();
+                System.out.println("Adding chunks " + count);
+                count++;
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                outputStream.write(totbyte);
+                outputStream.write(decrypttobyte(inputLine, privateKey));
+                totbyte = outputStream.toByteArray();
+            } while (!(inputLine == null));
+        }catch (NullPointerException e){
+        }
+        printWriter.write(new String(totbyte));
         printWriter.close();
         in.close();
         out.close();
         clientSock.close();
-        System.out.println("Cipher Transfer Finished, Starting Decryption");
-        //
-        //
-        //ConvertFile();
-        ConverttoImg();
-        //
-        //
-    }
-    private void ConvertFile() throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
-        int count=0;
-        String path = rootpath;
-        String workingpath = parsefile(path,count);
-        KeyPair ShareKeyPair=LoadKeyPair(path,"RSA");
-        dumpKeyPair(ShareKeyPair);
-        PrivateKey privateKey=ShareKeyPair.getPrivate();
-        PublicKey publicKey=ShareKeyPair.getPublic();
-        PrintWriter printWriter = new PrintWriter(workingpath);
-        try (BufferedReader br = new BufferedReader(new FileReader(rootpath+"RSAcipher.txt"))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                printWriter.write(decrypt(line,privateKey) + "\r\n");
-            }
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-        printWriter.close();
-        System.out.println("Decryption Finished");
-    }
-
-    private void ConverttoImg() throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
-        int count=0;
-        String path = rootpath;
-        String workingpath = parsefile(path,count);
-        KeyPair ShareKeyPair=LoadKeyPair(path,"RSA");
-        dumpKeyPair(ShareKeyPair);
-        PrivateKey privateKey=ShareKeyPair.getPrivate();
-        PublicKey publicKey=ShareKeyPair.getPublic();
-        byte[] imgbyte = new byte[0];
-        try (BufferedReader br = new BufferedReader(new FileReader(rootpath+"RSAcipher.txt"))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                byte[] one = imgbyte;
-                byte[] two = decrypttoimg(line,privateKey);
-                byte[] combined = new byte[one.length + two.length];
-
-                for (int i = 0; i < combined.length; ++i)
-                {
-                    combined[i] = i < one.length ? one[i] : two[i - one.length];
-                }
-                imgbyte = combined;
-            }
-            System.out.println(imgbyte.length);
-            BufferedImage img = ImageIO.read(new ByteArrayInputStream(imgbyte));
-            ImageIO.write(img, "bmp", new File(rootpath+"new-darksouls.bmp"));
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-        System.out.println("Image Decryption Finished");
+        System.out.println("Finished");
     }
 
     public static void main(String[] args) throws Exception {
-        int max_pool_size = 10;
+        int max_pool_size = 5;
         ExecutorService exec = Executors.newFixedThreadPool(max_pool_size);
         for(int i=4999; i<=5003;i++){
             Runnable worker = new FileServerRSA(i);
@@ -220,16 +177,8 @@ public class FileServerRSA implements Runnable{
 
         return new KeyPair(publicKey, privateKey);
     }
-    public static String decrypt(String cipherText, PrivateKey privateKey) throws Exception {
-        byte[] bytes = Base64.getDecoder().decode(cipherText);
-        //System.out.println("Signed bytes[] length: "+bytes.length);
 
-        Cipher decriptCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-        decriptCipher.init(Cipher.DECRYPT_MODE, privateKey);
-
-        return new String(decriptCipher.doFinal(bytes));
-    }
-    public static byte[] decrypttoimg(String cipherText, PrivateKey privateKey) throws Exception {
+    public static byte[] decrypttobyte(String cipherText, PrivateKey privateKey) throws Exception {
         byte[] bytes = Base64.getDecoder().decode(cipherText);
         //System.out.println("Signed bytes[] length: "+bytes.length);
 
@@ -238,6 +187,7 @@ public class FileServerRSA implements Runnable{
         byte[] byteset=decriptCipher.doFinal(bytes);
         return byteset;
     }
+
     private static void dumpKeyPair(KeyPair keyPair) {
         PublicKey pub = keyPair.getPublic();
         System.out.println("Public Key: " + getHexString(pub.getEncoded()));
@@ -259,17 +209,6 @@ public class FileServerRSA implements Runnable{
         while (fl.exists()){
             count++;
             fdn = "Out"+count+".txt";
-            fl = new File(path+fdn);
-        }
-        return path+fdn;
-    }
-
-    private static String parsefileimg(String path, int count) {
-        String fdn = "Out"+count+".bmp";
-        File fl = new File(path+fdn);
-        while (fl.exists()){
-            count++;
-            fdn = "Out"+count+".bmp";
             fl = new File(path+fdn);
         }
         return path+fdn;
