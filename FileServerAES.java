@@ -3,7 +3,9 @@ package NS_Project;
 /**
  * Created by skychaser on 04/14/2017.
  */
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -39,6 +41,7 @@ import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.imageio.ImageIO;
 
 
 public class FileServerAES implements Runnable{
@@ -82,7 +85,6 @@ public class FileServerAES implements Runnable{
             } catch (InvalidKeySpecException e) {
                 e.printStackTrace();
             } catch (Exception e) {
-                e.printStackTrace();
             }
         }
     }
@@ -114,7 +116,10 @@ public class FileServerAES implements Runnable{
         out.close();
         clientSock.close();
         System.out.println("Cipher Transfer Finished, Starting Decryption");
-        ConvertFile();
+        //
+        //ConvertFile();
+        ConverttoImg();
+        //
     }
     public void ConvertFile() throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
         int count=0;
@@ -128,6 +133,20 @@ public class FileServerAES implements Runnable{
         printWriter.write(outputstring);
         printWriter.close();
         System.out.println("Decryption Finished");
+    }
+
+    private void ConverttoImg() throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
+        int count=0;
+        String workingpath = parsefileimg(rootpath,count);
+        String key = "Bar12345Bar12345";
+        String initVector = "RandomInitVector";
+        BufferedReader br = new BufferedReader(new FileReader(rootpath+"AEScipher.txt"));
+        String cipherdata = br.readLine();
+        byte[] imgbyte = decrypttoimg(key,initVector,cipherdata);
+        System.out.println("Image_b_length: "+imgbyte.length);
+        BufferedImage img = ImageIO.read(new ByteArrayInputStream(imgbyte));
+        ImageIO.write(img, "bmp", new File(rootpath+"new-darksouls2.bmp"));
+        System.out.println("Image Decryption Finished");
     }
 
     public static void main(String[] args) throws Exception {
@@ -165,5 +184,34 @@ public class FileServerAES implements Runnable{
             fl = new File(path+fdn);
         }
         return path+fdn;
+    }
+
+    private static String parsefileimg(String path, int count) {
+        String fdn = "Out"+count+".bmp";
+        File fl = new File(path+fdn);
+        while (fl.exists()){
+            count++;
+            fdn = "Out"+count+".bmp";
+            fl = new File(path+fdn);
+        }
+        return path+fdn;
+    }
+
+    public static byte[] decrypttoimg(String key, String initVector, String encrypted) {
+        try {
+            IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
+            SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
+
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+            cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
+
+            byte[] original = cipher.doFinal(Base64.getDecoder().decode(encrypted));
+
+            return original;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        return null;
     }
 }

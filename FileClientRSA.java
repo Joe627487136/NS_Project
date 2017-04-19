@@ -3,6 +3,9 @@ package NS_Project;
 /**
  * Created by skychaser on 04/14/2017.
  */
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
+import java.awt.image.WritableRaster;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -40,6 +43,7 @@ import java.util.Arrays;
 import java.util.Base64;
 
 import javax.crypto.Cipher;
+import javax.imageio.ImageIO;
 
 import static java.util.Base64.getEncoder;
 
@@ -58,7 +62,8 @@ public class FileClientRSA {
             System.out.println("Handshake established\n\n");
         }
         if(Handshake) {
-            String filepath = rootpath+"smallFile.txt";
+            String filepath1 = rootpath+"smallfile.txt";
+            String filepath2 = rootpath+"globe.bmp";
             Cipher encryptCipher = Cipher.getInstance("RSA");
             KeyPair ShareKeyPair=LoadKeyPair(path,"RSA");
             dumpKeyPair(ShareKeyPair);
@@ -66,11 +71,16 @@ public class FileClientRSA {
             PublicKey publicKey=ShareKeyPair.getPublic();
             encryptCipher.init(Cipher.ENCRYPT_MODE, publicKey);
             PrintWriter out = new PrintWriter(echoSocket.getOutputStream(), true);
-            byte[] cipherbytes = Files.readAllBytes(Paths.get(filepath));
+
+            //Txt:
+            byte[] cipherbytes = Files.readAllBytes(Paths.get(filepath2));
+
+            //Image:
+            //byte[] cipherbytes = extractBytes(filepath2);
+
             byte[][] cipherchunks = splitArray(cipherbytes,117);
             for(byte[] i:cipherchunks){
-                String s = new String(i);
-                String flushingstring = encrypt(s,publicKey);
+                String flushingstring = encrypt(i,publicKey);
                 out.println(flushingstring);
                 out.flush();
             }
@@ -81,34 +91,22 @@ public class FileClientRSA {
             System.out.println("Client Socket Closed");
         }else {
             System.out.println("Reject!");
+            echoSocket.close();
         }
     }
 
-    private static boolean EstablishHandshake(InputStream ca) throws CertificateException {
-        CertificateFactory cf = CertificateFactory.getInstance("X.509");
-        X509Certificate CAcert =(X509Certificate)cf.generateCertificate(ca);
-        PublicKey CAcertPublicKey = CAcert.getPublicKey();
+    private static boolean EstablishHandshake(InputStream ca) {
         try {
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            X509Certificate CAcert =(X509Certificate)cf.generateCertificate(ca);
+            PublicKey CAcertPublicKey = CAcert.getPublicKey();
             CAcert.checkValidity();
-        } catch (CertificateExpiredException e) {
-            e.printStackTrace();
-        } catch (CertificateNotYetValidException e) {
-            e.printStackTrace();
-        }
-        try {
             CAcert.verify(CAcertPublicKey);
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (NoSuchProviderException e) {
-            e.printStackTrace();
-        } catch (SignatureException e) {
-            e.printStackTrace();
+            return true;
+        }catch (Exception e){
+            System.out.println("Bye!");
         }
-        return true;
+        return false;
     }
 
     public static void SaveKeyPair(String path, KeyPair keyPair) throws IOException {
@@ -145,11 +143,11 @@ public class FileClientRSA {
         return arrays;
     }
 
-    public static String encrypt(String plainText, PublicKey publicKey) throws Exception {
+    public static String encrypt(byte[] k, PublicKey publicKey) throws Exception {
         Cipher encryptCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
         encryptCipher.init(Cipher.ENCRYPT_MODE, publicKey);
 
-        byte[] cipherText = encryptCipher.doFinal(plainText.getBytes());
+        byte[] cipherText = encryptCipher.doFinal(k);
         return Base64.getEncoder().encodeToString(cipherText);
     }
 
@@ -197,5 +195,17 @@ public class FileClientRSA {
         PrivateKey privateKey = keyFactory.generatePrivate(privateKeySpec);
 
         return new KeyPair(publicKey, privateKey);
+    }
+
+    public static byte[] extractBytes (String ImageName) throws IOException {
+        // open image
+        File imgPath = new File(ImageName);
+        BufferedImage bufferedImage = ImageIO.read(imgPath);
+
+        // get DataBufferBytes from Raster
+        WritableRaster raster = bufferedImage .getRaster();
+        DataBufferByte data   = (DataBufferByte) raster.getDataBuffer();
+
+        return ( data.getData() );
     }
 }

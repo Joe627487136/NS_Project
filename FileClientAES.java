@@ -58,55 +58,42 @@ public class FileClientAES {
         if(Handshake) {
             String key = "Bar12345Bar12345";
             String initVector = "RandomInitVector";
-            String filepath = "/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/largeFile.txt";
+            //
+            //String filepath = "/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/largeFile.txt";
+            String filepath = "/Users/zhouxuexuan/AndroidStudioProjects/Lab/lab/src/main/java/NS_Project/globe.bmp";
+            //
             PrintWriter out = new PrintWriter(echoSocket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
-            BufferedReader is = new BufferedReader(new FileReader(filepath));
-            String cipherdata = new String(Files.readAllBytes(Paths.get(filepath)));
-            String inputraw = is.readLine();
-            String ciphertxt = encrypt(key,initVector,cipherdata);
+            byte[] cipherbytes = Files.readAllBytes(Paths.get(filepath));
+            System.out.println(cipherbytes.length);
+            String ciphertxt = encrypt(key,initVector,cipherbytes);
             out.println(ciphertxt);
             out.flush();
             out.println("&&&NOMORE&&&");
-            is.close();
-            in.close();
             out.close();
             echoSocket.close();
             System.out.println("Client Socket Closed");
         }else {
             System.out.println("Reject!");
+            echoSocket.close();
         }
     }
 
-    private static boolean EstablishHandshake(InputStream ca) throws CertificateException {
-        CertificateFactory cf = CertificateFactory.getInstance("X.509");
-        X509Certificate CAcert =(X509Certificate)cf.generateCertificate(ca);
-        PublicKey CAcertPublicKey = CAcert.getPublicKey();
+    private static boolean EstablishHandshake(InputStream ca) {
         try {
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            X509Certificate CAcert =(X509Certificate)cf.generateCertificate(ca);
+            PublicKey CAcertPublicKey = CAcert.getPublicKey();
             CAcert.checkValidity();
-        } catch (CertificateExpiredException e) {
-            e.printStackTrace();
-        } catch (CertificateNotYetValidException e) {
-            e.printStackTrace();
-        }
-        try {
             CAcert.verify(CAcertPublicKey);
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (NoSuchProviderException e) {
-            e.printStackTrace();
-        } catch (SignatureException e) {
-            e.printStackTrace();
+            return true;
+        }catch (Exception e){
+            System.out.println("Bye!");
         }
-        return true;
+        return false;
     }
 
 
-    public static String encrypt(String key, String initVector, String value) {
+    public static String encrypt(String key, String initVector, byte[] value) {
         try {
             IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
             SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
@@ -114,7 +101,7 @@ public class FileClientAES {
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
             cipher.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
 
-            byte[] encrypted = cipher.doFinal(value.getBytes());
+            byte[] encrypted = cipher.doFinal(value);
             System.out.println("encrypted string: " + Base64.getEncoder().encodeToString(encrypted));
 
             return Base64.getEncoder().encodeToString(encrypted);
